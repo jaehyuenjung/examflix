@@ -72,7 +72,7 @@ pscale auth login
 ### **PlanetScale** 데이타베이스 생성
 
 ```
-pscale database create mbox --region ap-northeast
+pscale database create examflix --region ap-northeast
 ```
 
 ### TMDB 데이터 **ETL**(**E**xtract => **T**ransform => **L**oad) 실행
@@ -86,7 +86,7 @@ npx prisma db seed
 ### **PlanetScale** 데이타베이스 연결
 
 ```
-pscale connect mbox
+pscale connect examflix
 =>
 Tried address <LOCALHOST_URL>, but it's already in use. Picking up a random port ...
 Secure connection to database mbox and branch main is established!.
