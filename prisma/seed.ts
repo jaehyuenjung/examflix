@@ -54,7 +54,7 @@ async function main() {
     Array.from({ length: PAGE_LENGTH }, (_, k) => k + 1).forEach((p) => {
         axios({
             method: "get",
-            url: `${BASE_URL}/movie/upcoming?api_key=${process.env.API_KEY}&page=${p}`,
+            url: `${BASE_URL}/movie/popular?api_key=${process.env.API_KEY}&page=${p}`,
         }).then(({ data: { results: movieResults } }) => {
             movieResults.forEach((movie: movieResult) => {
                 axios({
