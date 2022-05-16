@@ -11,13 +11,13 @@ async function handler(
     res: NextApiResponse<ResponseType>
 ) {
     if (req.method === "GET") {
-        const { page } = req.query;
-        let movies: Movie[];
-        if (page && Number(page) !== NaN) {
-            movies = await client.movie.findMany({ take, skip: Number(page) });
-        } else {
-            movies = await client.movie.findMany({ take, skip: 1 });
-        }
+        const movies = await client.movie.findMany({
+            include: {
+                actors: true,
+                genres: true,
+                crews: true,
+            },
+        });
         return res.json({ ok: true, movies });
     }
 }

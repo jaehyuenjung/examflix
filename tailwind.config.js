@@ -5,6 +5,10 @@ module.exports = {
         "./libs/client/utils.ts",
     ],
     theme: {
+        transformOrigin: {
+            "center-left": "center left",
+            "center-right": "center right",
+        },
         extend: {},
     },
     plugins: [],

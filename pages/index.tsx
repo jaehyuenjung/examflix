@@ -1,52 +1,99 @@
 import type { NextPage, NextPageContext } from "next";
 import useSWR, { SWRConfig } from "swr";
 import client from "@libs/server/client";
-import { Movie } from "@prisma/client";
+import { Actor, Crew, Genre, Movie } from "@prisma/client";
 import { useRouter } from "next/router";
 import { ResponseType } from "@libs/server/withHandler";
-import { useEffect, useState } from "react";
+import Banner from "@components/banner";
+import Slider from "@components/slider";
+import Head from "next/head";
 
-// 한 페이지(skip) 당 영화 개수
-const take = 5;
+export interface IMovieDetail extends Movie {
+    actors: Actor[];
+    genres: Genre[];
+    crews: Crew[];
+}
 
 interface MovieResponse extends ResponseType {
-    movies: Movie[];
-    totalCount?: number;
+    movies: IMovieDetail[];
 }
 
 const Home: NextPage = () => {
     const router = useRouter();
-    const [totalCount, setTotalCount] = useState(0);
-    const { data } = useSWR<MovieResponse>(
-        `/api/movies?page=${router.query.page ? router.query.page : 1}`
-    );
+    const { keyword } = router.query;
+    const { data } = useSWR<MovieResponse>("/api/movies");
 
-    useEffect(() => {
-        if (data && data.totalCount) {
-            setTotalCount(data.totalCount);
-        }
-    }, [data]);
+    let filterMovies = data?.movies ? data.movies : [];
+    if (keyword) {
+        const titleResult = filterMovies.filter((movie) =>
+            movie.title.includes(String(keyword))
+        );
+        const genreResult = filterMovies.filter((movie) =>
+            movie.genres.some((g) => g.name.includes(String(keyword)))
+        );
+        const actorResult = filterMovies.filter((movie) =>
+            movie.actors.some((a) => a.name === String(keyword))
+        );
+        const crewResult = filterMovies.filter((movie) =>
+            movie.crews.some((c) => c.name.includes(String(keyword)))
+        );
+        filterMovies = [];
 
+        titleResult.forEach((movie) => {
+            if (!filterMovies.find((m) => m.id === movie.id)) {
+                filterMovies.push(movie);
+            }
+        });
+        genreResult.forEach((movie) => {
+            if (!filterMovies.find((m) => m.id === movie.id)) {
+                filterMovies.push(movie);
+            }
+        });
+        actorResult.forEach((movie) => {
+            if (!filterMovies.find((m) => m.id === movie.id)) {
+                filterMovies.push(movie);
+            }
+        });
+        crewResult.forEach((movie) => {
+            if (!filterMovies.find((m) => m.id === movie.id)) {
+                filterMovies.push(movie);
+            }
+        });
+    }
     return (
-        <div className="flex space-x-5">
-            {data?.movies.map((movie, key) => (
-                <div key={key} className="flex">
-                    <img
-                        src={`https://image.tmdb.org/t/p/w220_and_h330_face/${movie.poster_path}`}
-                    />
-                </div>
-            ))}
+        <div className="relative w-screen h-screen overflow-hidden min-w-[1000px]">
+            <Head>
+                <title>Examflix</title>
+                <link
+                    rel="shortcut icon"
+                    href="https://assets.nflxext.com/us/ffe/siteui/common/icons/nficon2016.ico"
+                ></link>
+                <link
+                    rel="apple-touch-icon"
+                    href="https://assets.nflxext.com/us/ffe/siteui/common/icons/nficon2016.png"
+                ></link>
+                <meta
+                    name="viewport"
+                    content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0"
+                />
+            </Head>
+            {data?.movies ? (
+                <>
+                    <Banner movies={data.movies} />
+                    <Slider movies={filterMovies} />
+                </>
+            ) : null}
         </div>
     );
 };
 
-const Page: NextPage<{ response: { [key: string]: MovieResponse } }> = ({
-    response,
-}) => {
+const Page: NextPage<{ movies: IMovieDetail[] }> = ({ movies }) => {
     return (
         <SWRConfig
             value={{
-                fallback: response,
+                fallback: {
+                    "/api/movies": { ok: true, movies },
+                },
             }}
         >
             <Home />
@@ -54,30 +101,15 @@ const Page: NextPage<{ response: { [key: string]: MovieResponse } }> = ({
     );
 };
 
-export async function getServerSideProps({ query }: NextPageContext) {
-    const { page } = query;
-    const response: { [key: string]: MovieResponse } = {};
-    const totalCount = await (await client.movie.findMany({})).length;
-    if (page && Number(page) !== NaN) {
-        response[`/api/movies?page=${page}`] = {
-            ok: true,
-            movies: await client.movie.findMany({
-                take,
-                skip: Number(page),
-            }),
-            totalCount,
-        };
-    } else {
-        response[`/api/movies?page=${1}`] = {
-            ok: true,
-            movies: await client.movie.findMany({
-                take,
-                skip: 1,
-            }),
-            totalCount,
-        };
-    }
-    return { props: { response } };
+export async function getServerSideProps({}: NextPageContext) {
+    const movies = await client.movie.findMany({
+        include: {
+            actors: true,
+            genres: true,
+            crews: true,
+        },
+    });
+    return { props: { movies } };
 }
 
 export default Page;
