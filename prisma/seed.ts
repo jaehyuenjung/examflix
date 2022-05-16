@@ -96,9 +96,11 @@ async function main() {
                                         axios({
                                             method: "get",
                                             url: `${BASE_URL}/movie/${movie.id}/credits?api_key=${process.env.API_KEY}`,
-                                        }).then(({ data: { cast, crew } }) => {
-                                            client.movie
-                                                .create({
+                                        }).then(
+                                            async ({
+                                                data: { cast, crew },
+                                            }) => {
+                                                await client.movie.create({
                                                     data: {
                                                         id: movie.id,
                                                         title: movie.title,
@@ -123,71 +125,52 @@ async function main() {
                                                                     })
                                                                 ),
                                                         },
+                                                        actors: {
+                                                            connectOrCreate:
+                                                                cast
+                                                                    .slice(0, 5)
+                                                                    .map(
+                                                                        (
+                                                                            actor: Actor
+                                                                        ) => ({
+                                                                            where: {
+                                                                                id: actor.id,
+                                                                            },
+                                                                            create: {
+                                                                                id: actor.id,
+                                                                                name: actor.name,
+                                                                            },
+                                                                        })
+                                                                    ),
+                                                        },
+                                                        crews: {
+                                                            connectOrCreate:
+                                                                crew
+                                                                    .filter(
+                                                                        (c: {
+                                                                            job: string;
+                                                                        }) =>
+                                                                            c.job ===
+                                                                            "Director"
+                                                                    )
+                                                                    .map(
+                                                                        (
+                                                                            c: Crew
+                                                                        ) => ({
+                                                                            where: {
+                                                                                id: c.id,
+                                                                            },
+                                                                            create: {
+                                                                                id: c.id,
+                                                                                name: c.name,
+                                                                            },
+                                                                        })
+                                                                    ),
+                                                        },
                                                     },
-                                                })
-                                                .then(async (newMovie) => {
-                                                    await client.movie.update({
-                                                        where: {
-                                                            id: newMovie.id,
-                                                        },
-                                                        data: {
-                                                            actors: {
-                                                                connectOrCreate:
-                                                                    cast
-                                                                        .slice(
-                                                                            0,
-                                                                            5
-                                                                        )
-                                                                        .map(
-                                                                            (
-                                                                                actor: Actor
-                                                                            ) => ({
-                                                                                where: {
-                                                                                    id: actor.id,
-                                                                                },
-                                                                                create: {
-                                                                                    id: actor.id,
-                                                                                    name: actor.name,
-                                                                                },
-                                                                            })
-                                                                        ),
-                                                            },
-                                                        },
-                                                    });
-
-                                                    await client.movie.update({
-                                                        where: {
-                                                            id: newMovie.id,
-                                                        },
-                                                        data: {
-                                                            crews: {
-                                                                connectOrCreate:
-                                                                    crew
-                                                                        .filter(
-                                                                            (c: {
-                                                                                job: string;
-                                                                            }) =>
-                                                                                c.job ===
-                                                                                "Director"
-                                                                        )
-                                                                        .map(
-                                                                            (
-                                                                                c: Crew
-                                                                            ) => ({
-                                                                                where: {
-                                                                                    id: c.id,
-                                                                                },
-                                                                                create: {
-                                                                                    id: c.id,
-                                                                                    name: c.name,
-                                                                                },
-                                                                            })
-                                                                        ),
-                                                            },
-                                                        },
-                                                    });
                                                 });
-                                        });
+                                            }
+                                        );
                                     });
                             });
                     });
