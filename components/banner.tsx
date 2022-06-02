@@ -11,7 +11,9 @@ const ReactPlayer = dynamic(() => import("react-player/youtube"), {
 });
 
 const Banner: NextPage = () => {
-    const { data } = useSWR<MovieResponse>("/api/movies");
+    const { data } = useSWR<MovieResponse>(
+        typeof window === "undefined" ? null : "/api/movies"
+    );
     const [index, setIndex] = useState(0);
 
     useEffect(() => {

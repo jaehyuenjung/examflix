@@ -11,7 +11,11 @@ import { MovieResponse } from "@types.ts";
 const Search: NextPage = () => {
     const router = useRouter();
     const { data } = useSWR<MovieResponse>(
-        router.query.q ? `/api/movies?q=${router.query.q}` : null
+        typeof window === "undefined"
+            ? null
+            : router.query.q
+            ? `/api/movies?q=${router.query.q}`
+            : null
     );
 
     if (!router.query.q) {

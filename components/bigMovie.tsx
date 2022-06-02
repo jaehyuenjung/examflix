@@ -24,7 +24,11 @@ const BigMovie: NextPage<BigMovieProps> = ({
 }) => {
     const router = useRouter();
     const { data } = useSWR<MovieDetailResponse>(
-        movieId ? `/api/movies/${movieId}` : null
+        typeof window === "undefined"
+            ? null
+            : movieId
+            ? `/api/movies/${movieId}`
+            : null
     );
 
     const onSearch = (keyword: string) => {
