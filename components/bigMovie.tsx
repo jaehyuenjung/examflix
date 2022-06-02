@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { MovieDetailResponse } from "@types.ts";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
+import Loading from "./loading";
 
 const ReactPlayer = dynamic(() => import("react-player/youtube"), {
     ssr: false,
@@ -182,9 +183,7 @@ const BigMovie: NextPage<BigMovieProps> = ({
                         </div>
                     </>
                 ) : (
-                    <div className="w-full h-full flex justify-center items-center text-white text-xl">
-                        Loading...
-                    </div>
+                    <Loading />
                 )}
             </motion.div>
         </div>,

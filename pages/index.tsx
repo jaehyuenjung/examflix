@@ -5,12 +5,22 @@ import Banner from "@components/banner";
 import Slider from "@components/slider";
 import Head from "next/head";
 import { Movie } from "@prisma/client";
+import { useRouter } from "next/router";
+import Loading from "@components/loading";
 
 interface HomeProps {
     movies: Movie[];
 }
 
 const Home: NextPage<HomeProps> = ({ movies }) => {
+    const router = useRouter();
+    if (router.isFallback) {
+        return (
+            <div className="w-screen h-screen">
+                <Loading />
+            </div>
+        );
+    }
     return (
         <div className="w-screen overflow-x-hidden min-w-[1000px] bg-black">
             <Head>

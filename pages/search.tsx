@@ -34,16 +34,12 @@ const Search: NextPage = () => {
                     content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0"
                 />
             </Head>
-            {data ? (
-                data.movies ? (
-                    <>
-                        <Banner />
-                        <Slider title="검색 결과" movies={data.movies} />
-                    </>
-                ) : null
-            ) : (
-                <div>Loading</div>
-            )}
+            {data?.movies ? (
+                <>
+                    <Banner />
+                    <Slider title="검색 결과" movies={data.movies} />
+                </>
+            ) : null}
         </div>
     );
 };
@@ -73,35 +69,45 @@ export async function getServerSideProps({ query }: NextPageContext) {
         };
     const movies = await client.movie.findMany({
         where: {
-            OR: {
-                title: {
-                    contains: query.q + "",
+            OR: [
+                {
+                    title: {
+                        contains: query.q + "",
+                    },
                 },
-                overview: {
-                    contains: query.q + "",
+                {
+                    overview: {
+                        contains: query.q + "",
+                    },
                 },
-                actors: {
-                    some: {
-                        name: {
-                            contains: query.q + "",
+                {
+                    actors: {
+                        some: {
+                            name: {
+                                contains: query.q + "",
+                            },
                         },
                     },
                 },
-                crews: {
-                    some: {
-                        name: {
-                            contains: query.q + "",
+                {
+                    crews: {
+                        some: {
+                            name: {
+                                contains: query.q + "",
+                            },
                         },
                     },
                 },
-                genres: {
-                    some: {
-                        name: {
-                            contains: query.q + "",
+                {
+                    genres: {
+                        some: {
+                            name: {
+                                contains: query.q + "",
+                            },
                         },
                     },
                 },
-            },
+            ],
         },
         include: {
             actors: true,

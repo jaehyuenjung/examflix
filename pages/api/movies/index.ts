@@ -12,35 +12,45 @@ async function handler(
         const movies = await (q
             ? client.movie.findMany({
                   where: {
-                      OR: {
-                          title: {
-                              contains: q + "",
+                      OR: [
+                          {
+                              title: {
+                                  contains: q + "",
+                              },
                           },
-                          overview: {
-                              contains: q + "",
+                          {
+                              overview: {
+                                  contains: q + "",
+                              },
                           },
-                          actors: {
-                              some: {
-                                  name: {
-                                      contains: q + "",
+                          {
+                              actors: {
+                                  some: {
+                                      name: {
+                                          contains: q + "",
+                                      },
                                   },
                               },
                           },
-                          crews: {
-                              some: {
-                                  name: {
-                                      contains: q + "",
+                          {
+                              crews: {
+                                  some: {
+                                      name: {
+                                          contains: q + "",
+                                      },
                                   },
                               },
                           },
-                          genres: {
-                              some: {
-                                  name: {
-                                      contains: q + "",
+                          {
+                              genres: {
+                                  some: {
+                                      name: {
+                                          contains: q + "",
+                                      },
                                   },
                               },
                           },
-                      },
+                      ],
                   },
                   include: {
                       actors: true,
