@@ -1,23 +1,54 @@
-import widthHandler, { ResponseType } from "@libs/server/withHandler";
+import widthHandler from "@libs/server/withHandler";
 import { NextApiRequest, NextApiResponse } from "next";
 import client from "@libs/server/client";
-import { Movie } from "@prisma/client";
-
-// 한 페이지(skip) 당 영화 개수
-const take = 5;
+import { ResponseType } from "@types.ts";
 
 async function handler(
     req: NextApiRequest,
     res: NextApiResponse<ResponseType>
 ) {
     if (req.method === "GET") {
-        const movies = await client.movie.findMany({
-            include: {
-                actors: true,
-                genres: true,
-                crews: true,
-            },
-        });
+        const { q } = req.query;
+        const movies = await (q
+            ? client.movie.findMany({
+                  where: {
+                      OR: {
+                          title: {
+                              contains: q + "",
+                          },
+                          overview: {
+                              contains: q + "",
+                          },
+                          actors: {
+                              some: {
+                                  name: {
+                                      contains: q + "",
+                                  },
+                              },
+                          },
+                          crews: {
+                              some: {
+                                  name: {
+                                      contains: q + "",
+                                  },
+                              },
+                          },
+                          genres: {
+                              some: {
+                                  name: {
+                                      contains: q + "",
+                                  },
+                              },
+                          },
+                      },
+                  },
+                  include: {
+                      actors: true,
+                      crews: true,
+                      genres: true,
+                  },
+              })
+            : client.movie.findMany());
         return res.json({ ok: true, movies });
     }
 }

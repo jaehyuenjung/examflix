@@ -1,67 +1,18 @@
 import type { NextPage, NextPageContext } from "next";
-import useSWR, { SWRConfig } from "swr";
+import { SWRConfig } from "swr";
 import client from "@libs/server/client";
-import { Actor, Crew, Genre, Movie } from "@prisma/client";
-import { useRouter } from "next/router";
-import { ResponseType } from "@libs/server/withHandler";
 import Banner from "@components/banner";
 import Slider from "@components/slider";
 import Head from "next/head";
+import { Movie } from "@prisma/client";
 
-export interface IMovieDetail extends Movie {
-    actors: Actor[];
-    genres: Genre[];
-    crews: Crew[];
+interface HomeProps {
+    movies: Movie[];
 }
 
-interface MovieResponse extends ResponseType {
-    movies: IMovieDetail[];
-}
-
-const Home: NextPage = () => {
-    const router = useRouter();
-    const { keyword } = router.query;
-    const { data } = useSWR<MovieResponse>("/api/movies");
-
-    let filterMovies = data?.movies ? data.movies : [];
-    if (keyword) {
-        const titleResult = filterMovies.filter((movie) =>
-            movie.title.includes(String(keyword))
-        );
-        const genreResult = filterMovies.filter((movie) =>
-            movie.genres.some((g) => g.name.includes(String(keyword)))
-        );
-        const actorResult = filterMovies.filter((movie) =>
-            movie.actors.some((a) => a.name === String(keyword))
-        );
-        const crewResult = filterMovies.filter((movie) =>
-            movie.crews.some((c) => c.name.includes(String(keyword)))
-        );
-        filterMovies = [];
-
-        titleResult.forEach((movie) => {
-            if (!filterMovies.find((m) => m.id === movie.id)) {
-                filterMovies.push(movie);
-            }
-        });
-        genreResult.forEach((movie) => {
-            if (!filterMovies.find((m) => m.id === movie.id)) {
-                filterMovies.push(movie);
-            }
-        });
-        actorResult.forEach((movie) => {
-            if (!filterMovies.find((m) => m.id === movie.id)) {
-                filterMovies.push(movie);
-            }
-        });
-        crewResult.forEach((movie) => {
-            if (!filterMovies.find((m) => m.id === movie.id)) {
-                filterMovies.push(movie);
-            }
-        });
-    }
+const Home: NextPage<HomeProps> = ({ movies }) => {
     return (
-        <div className="relative w-screen h-screen overflow-hidden min-w-[1000px]">
+        <div className="w-screen overflow-x-hidden min-w-[1000px] bg-black">
             <Head>
                 <title>Examflix</title>
                 <link
@@ -77,39 +28,34 @@ const Home: NextPage = () => {
                     content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0"
                 />
             </Head>
-            {data?.movies ? (
+            {movies ? (
                 <>
-                    <Banner movies={data.movies} />
-                    <Slider movies={filterMovies} />
+                    <SWRConfig
+                        value={{
+                            fallback: {
+                                "/api/movies": { ok: true, movies },
+                            },
+                        }}
+                    >
+                        <Banner />
+                    </SWRConfig>
+                    <Slider title="신규 콘텐츠" movies={movies} />
                 </>
             ) : null}
         </div>
     );
 };
 
-const Page: NextPage<{ movies: IMovieDetail[] }> = ({ movies }) => {
-    return (
-        <SWRConfig
-            value={{
-                fallback: {
-                    "/api/movies": { ok: true, movies },
-                },
-            }}
-        >
-            <Home />
-        </SWRConfig>
-    );
-};
+export async function getStaticProps({}: NextPageContext) {
+    const movies = await client.movie.findMany();
 
-export async function getServerSideProps({}: NextPageContext) {
-    const movies = await client.movie.findMany({
-        include: {
-            actors: true,
-            genres: true,
-            crews: true,
+    return {
+        props: {
+            movies,
         },
-    });
-    return { props: { movies } };
+
+        revalidate: 60 * 24,
+    };
 }
 
-export default Page;
+export default Home;
