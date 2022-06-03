@@ -10,7 +10,3 @@ body {
 ::-webkit-scrollbar {
     display: none;
 }
-
-.sldier-last-child:nth-child(8) {
-    transform-origin: center right;
-}

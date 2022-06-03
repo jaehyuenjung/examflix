@@ -33,6 +33,7 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
     const [width, setWidth] = useState(0);
     const [skip, setSkip] = useState(0);
     const [take, setTake] = useState(0);
+    const [isMobile, setIsMobile] = useState(false);
     const [leaving, setLeaving] = useState(false);
     const [back, setBack] = useState(false);
 
@@ -56,7 +57,11 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
         return () => {
             window.removeEventListener("resize", pageResize);
         };
-    }, []);
+    }, [divRef]);
+
+    useEffect(() => {
+        setIsMobile(width < 768);
+    }, [width]);
 
     const rowVariants = {
         hidden: {
@@ -78,8 +83,6 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
 
     const isLeftExist = skip !== 0;
     const isRightExist = skip !== Math.floor(movies.length / take - 1);
-
-    const isMobile = width < 768;
 
     return (
         <div ref={divRef} className="absolute w-full space-y-2 top-[75%]">
@@ -215,7 +218,7 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
                             key={movie.id}
                             whileHover="hover"
                             transition={{ type: "tween" }}
-                            className="bg-white aspect-[1/1.4] text-[66px] cursor-pointer first:origin-center-left sldier-last-child bg-cover"
+                            className="bg-white aspect-[1/1.4] text-[66px] cursor-pointer bg-cover"
                         >
                             <motion.div
                                 variants={infoVariants}
@@ -285,6 +288,7 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
                         setOpen(false);
                         setSeletedId(undefined);
                     }}
+                    divRef={divRef}
                 />
             </AnimatePresence>
         </div>

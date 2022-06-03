@@ -17,15 +17,16 @@ interface BigMovieProps {
     open: boolean;
     movieId?: number;
     onCloseCallback: () => void;
+    divRef: React.RefObject<HTMLDivElement>;
 }
 
 const BigMovie: NextPage<BigMovieProps> = ({
     open,
     movieId,
     onCloseCallback,
+    divRef,
 }) => {
     const router = useRouter();
-    const divRef = useRef<HTMLDivElement>(null);
     const [width, setWidth] = useState(0);
     const [isMobile, setIsMobile] = useState(false);
     const { data } = useSWR<MovieDetailResponse>(
@@ -44,24 +45,21 @@ const BigMovie: NextPage<BigMovieProps> = ({
         const pageResize = () => {
             if (divRef?.current) {
                 const newWidth = divRef.current.clientWidth;
+                console.log(newWidth);
                 setWidth(newWidth);
+                setIsMobile(newWidth < 768);
             }
         };
-        pageResize();
         window.addEventListener("resize", pageResize);
+        pageResize();
         return () => {
             window.removeEventListener("resize", pageResize);
         };
-    }, []);
-
-    useEffect(() => {
-        setIsMobile(width < 768);
-    }, [width]);
+    }, [divRef]);
 
     if (!open) return null;
     return createPortal(
         <div
-            ref={divRef}
             onClick={onCloseCallback}
             className="fixed w-screen h-screen flex justify-center items-center top-0 z-50"
         >
@@ -238,4 +236,4 @@ const BigMovie: NextPage<BigMovieProps> = ({
     );
 };
 
-export default React.memo(BigMovie);
+export default BigMovie;
