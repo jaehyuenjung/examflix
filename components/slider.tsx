@@ -82,7 +82,7 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
     };
 
     const isLeftExist = skip > 0;
-    const isRightExist = skip < Math.floor(movies.length / take - 1);
+    const isRightExist = skip < Math.floor((movies.length - 1) / take);
 
     return (
         <div ref={divRef} className="absolute w-full space-y-2 top-[75%]">
@@ -103,7 +103,11 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
                 >
                     {take &&
                         Array.from(
-                            { length: Math.floor(movies.length / take) },
+                            {
+                                length: Math.floor(
+                                    (movies.length - 1) / take + 1
+                                ),
+                            },
                             (_, i) => (
                                 <div
                                     onClick={() => {
