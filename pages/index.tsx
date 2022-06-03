@@ -68,7 +68,7 @@ export async function getStaticProps({}: NextPageContext) {
             movies: JSON.parse(JSON.stringify(movies)),
         },
 
-        revalidate: 60 * 60 * 24,
+        revalidate: 60 * 60 * 24 * 30,
     };
 }
 
