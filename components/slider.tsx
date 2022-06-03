@@ -97,7 +97,8 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
                 </h1>
                 <motion.div
                     className={cls(
-                        "flex justify-center items-center space-x-3 max-w-[60%] overflow-hidden mr-4"
+                        "flex justify-center items-center max-w-[60%] overflow-hidden",
+                        isMobile ? "space-x-2 mr-2" : "space-x-3 mr-4"
                     )}
                 >
                     {take &&

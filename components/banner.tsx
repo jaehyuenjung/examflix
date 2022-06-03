@@ -60,7 +60,7 @@ const Banner: NextPage = () => {
                 top: isMobile ? `-${width / 768 + 10}%` : "0",
             }}
             className={cls(
-                "absolute w-full h-full flex flex-col justify-center bg-cover bg-black left-0",
+                "absolute w-full h-full flex flex-col justify-center bg-cover bg-black left-0 overflow-hidden",
                 isMobile ? "" : "p-16"
             )}
         >
