@@ -2,13 +2,8 @@ import { cls, makeImagePath } from "@libs/client/utils";
 import { Movie } from "@prisma/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { NextPage } from "next";
-import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
-import ReactPlayer from "react-player/youtube";
 import BigMovie from "./bigMovie";
-
-// 한 페이지(skip) 당 영화 개수
-const take = 7;
 
 const BoxVariants = {
     normal: {
@@ -37,6 +32,7 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
     const divRef = useRef<HTMLDivElement>(null);
     const [width, setWidth] = useState(0);
     const [skip, setSkip] = useState(0);
+    const [take, setTake] = useState(0);
     const [leaving, setLeaving] = useState(false);
     const [back, setBack] = useState(false);
 
@@ -48,9 +44,18 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
         : [];
 
     useEffect(() => {
-        if (divRef?.current) {
-            setWidth(divRef.current.clientWidth);
-        }
+        const pageResize = () => {
+            if (divRef?.current) {
+                const newWidth = divRef.current.clientWidth;
+                setWidth(newWidth);
+                setTake(newWidth < 768 ? 4 : 7);
+            }
+        };
+        pageResize();
+        window.addEventListener("resize", pageResize);
+        return () => {
+            window.removeEventListener("resize", pageResize);
+        };
     }, []);
 
     const rowVariants = {
@@ -72,38 +77,60 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
     };
 
     const isLeftExist = skip !== 0;
-    const isRightExist = skip !== Math.floor(movies.length / take);
+    const isRightExist = skip !== Math.floor(movies.length / take - 1);
+
+    const isMobile = width < 768;
+
     return (
         <div ref={divRef} className="absolute w-full space-y-2 top-[75%]">
             <div className="w-full flex justify-between items-center">
-                <h1 className="text-white font-bold text-xl">{title}</h1>
-                <div className="flex justify-center items-center space-x-3 mr-4">
-                    {Array.from(
-                        { length: Math.floor(movies.length / take) + 1 },
-                        (_, i) => (
-                            <div
-                                onClick={() => {
-                                    if (skip > i) {
-                                        new Promise((resolve) => {
-                                            setBack(true);
-                                            resolve(null);
-                                        }).then(() => setSkip(i));
-                                    } else {
-                                        new Promise((resolve) => {
-                                            setBack(false);
-                                            resolve(null);
-                                        }).then(() => setSkip(i));
-                                    }
-                                }}
-                                key={i}
-                                className={cls(
-                                    "px-2 py-[2px] rounded-md cursor-pointer",
-                                    skip === i ? "bg-white" : "bg-gray-400 "
-                                )}
-                            />
-                        )
+                <h1
+                    className={cls(
+                        "text-white font-bold",
+                        isMobile ? "text-lg" : "text-xl"
                     )}
-                </div>
+                >
+                    {title}
+                </h1>
+                <motion.div
+                    className={cls(
+                        "flex justify-center items-center space-x-3 max-w-[60%] overflow-hidden mr-4"
+                    )}
+                >
+                    {take &&
+                        Array.from(
+                            { length: Math.floor(movies.length / take) },
+                            (_, i) => (
+                                <div
+                                    onClick={() => {
+                                        if (leaving) return;
+                                        setLeaving(true);
+                                        if (skip > i) {
+                                            new Promise((resolve) => {
+                                                setBack(true);
+                                                resolve(null);
+                                            }).then(() => setSkip(i));
+                                        } else {
+                                            new Promise((resolve) => {
+                                                setBack(false);
+                                                resolve(null);
+                                            }).then(() => setSkip(i));
+                                        }
+                                    }}
+                                    key={i}
+                                    className={cls(
+                                        "rounded-md cursor-pointer",
+                                        skip === i
+                                            ? "bg-white"
+                                            : "bg-gray-400 ",
+                                        isMobile
+                                            ? "px-[3px] py-[3px] "
+                                            : "px-2 py-[2px] "
+                                    )}
+                                />
+                            )
+                        )}
+                </motion.div>
             </div>
             <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
                 <motion.div
@@ -114,8 +141,7 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
                     transition={{ type: "tween", duration: 1 }}
                     key={skip}
                     style={{
-                        gridTemplateColumns:
-                            "0.5fr repeat(7, minmax(0, 1fr)) 0.5fr",
+                        gridTemplateColumns: `0.5fr repeat(${take}, minmax(0, 1fr)) 0.5fr`,
                     }}
                     className={`grid gap-[5px] absolute w-full`}
                 >
@@ -123,16 +149,29 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
                         whileHover={{
                             opacity: 1,
                         }}
-                        className="w-full h-full flex justify-center items-center opacity-0"
+                        className={cls(
+                            "w-full h-full flex justify-center items-center",
+                            isMobile ? "opacity-100" : "opacity-0"
+                        )}
                     >
                         {isLeftExist && (
                             <motion.svg
-                                animate={{ color: "rgba(55, 65, 81, 0.8)" }}
-                                whileHover={{
-                                    color: "rgba(255,255,255,0.9)",
+                                animate={{
+                                    color: isMobile
+                                        ? "rgba(255,255,255,0.9)"
+                                        : "rgba(55, 65, 81, 0.8)",
                                 }}
+                                whileHover={
+                                    isMobile
+                                        ? undefined
+                                        : {
+                                              color: "rgba(255,255,255,0.9)",
+                                          }
+                                }
                                 onClick={() => {
+                                    if (leaving) return;
                                     if (isLeftExist) {
+                                        setLeaving(true);
                                         new Promise((resolve) => {
                                             setBack(true);
                                             resolve(null);
@@ -192,15 +231,28 @@ const Slider: NextPage<SliderProps> = ({ title, movies }) => {
                         whileHover={{
                             opacity: 1,
                         }}
-                        className="w-full h-full flex justify-center items-center opacity-0"
+                        className={cls(
+                            "w-full h-full flex justify-center items-center",
+                            isMobile ? "opacity-100" : "opacity-0"
+                        )}
                     >
                         {isRightExist && (
                             <motion.svg
-                                animate={{ color: "rgba(55, 65, 81, 0.8)" }}
-                                whileHover={{
-                                    color: "rgba(255,255,255,0.9)",
+                                animate={{
+                                    color: isMobile
+                                        ? "rgba(255,255,255,0.9)"
+                                        : "rgba(55, 65, 81, 0.8)",
                                 }}
+                                whileHover={
+                                    isMobile
+                                        ? undefined
+                                        : {
+                                              color: "rgba(255,255,255,0.9)",
+                                          }
+                                }
                                 onClick={() => {
+                                    if (leaving) return;
+                                    setLeaving(true);
                                     if (isRightExist) {
                                         new Promise((resolve) => {
                                             setBack(false);

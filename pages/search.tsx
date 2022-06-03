@@ -121,7 +121,7 @@ export async function getServerSideProps({ query }: NextPageContext) {
     });
     return {
         props: {
-            movies,
+            movies: JSON.parse(JSON.stringify(movies)),
         },
     };
 }

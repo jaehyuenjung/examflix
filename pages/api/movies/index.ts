@@ -58,7 +58,11 @@ async function handler(
                       genres: true,
                   },
               })
-            : client.movie.findMany());
+            : client.movie.findMany({
+                  include: {
+                      genres: true,
+                  },
+              }));
         return res.json({ ok: true, movies });
     }
 }

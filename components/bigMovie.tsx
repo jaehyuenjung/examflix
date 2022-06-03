@@ -6,6 +6,8 @@ import { MovieDetailResponse } from "@types.ts";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import Loading from "./loading";
+import React, { useEffect, useRef, useState } from "react";
+import { cls } from "@libs/client/utils";
 
 const ReactPlayer = dynamic(() => import("react-player/youtube"), {
     ssr: false,
@@ -23,6 +25,9 @@ const BigMovie: NextPage<BigMovieProps> = ({
     onCloseCallback,
 }) => {
     const router = useRouter();
+    const divRef = useRef<HTMLDivElement>(null);
+    const [width, setWidth] = useState(0);
+    const [isMobile, setIsMobile] = useState(false);
     const { data } = useSWR<MovieDetailResponse>(
         typeof window === "undefined"
             ? null
@@ -35,19 +40,41 @@ const BigMovie: NextPage<BigMovieProps> = ({
         router.push(`/search?q=${keyword}`);
     };
 
+    useEffect(() => {
+        const pageResize = () => {
+            if (divRef?.current) {
+                const newWidth = divRef.current.clientWidth;
+                setWidth(newWidth);
+            }
+        };
+        pageResize();
+        window.addEventListener("resize", pageResize);
+        return () => {
+            window.removeEventListener("resize", pageResize);
+        };
+    }, []);
+
+    useEffect(() => {
+        setIsMobile(width < 768);
+    }, [width]);
+
     if (!open) return null;
     return createPortal(
         <div
+            ref={divRef}
             onClick={onCloseCallback}
             className="fixed w-screen h-screen flex justify-center items-center top-0 z-50"
         >
             <motion.div
                 layoutId={movieId + ""}
-                className="absolute w-[40vw] h-[80vh] left-0 right-0 m-auto bg-black rounded-md overflow-y-auto will-change-transform overflow-x-hidden p-3"
+                className={cls(
+                    "absolute left-0 right-0 m-auto bg-black rounded-md overflow-y-auto will-change-auto overflow-x-hidden p-3",
+                    isMobile ? "w-[80vw] h-[60vh] " : "w-[40vw] h-[80vh] "
+                )}
             >
                 {data ? (
                     <>
-                        <div className="relative aspect-video overflow-hidden">
+                        <div className="relative aspect-video">
                             {data.movie?.video_path ? (
                                 <>
                                     <ReactPlayer
@@ -106,10 +133,21 @@ const BigMovie: NextPage<BigMovieProps> = ({
                                 style={{
                                     gridTemplateColumns: "70% 30%",
                                 }}
-                                className="grid"
+                                className={cls(
+                                    isMobile
+                                        ? "flex flex-col justify-center items-center"
+                                        : "grid"
+                                )}
                             >
                                 <div className="">
-                                    <div className="flex space-x-5 mx-11 text-gray-50 items-center">
+                                    <div
+                                        className={cls(
+                                            "flex text-gray-50 items-center",
+                                            isMobile
+                                                ? "mx-5 space-x-4 justify-center"
+                                                : "mx-11 space-x-5"
+                                        )}
+                                    >
                                         {data.movie &&
                                         data.movie?.certification !== -1 ? (
                                             <span>
@@ -127,7 +165,12 @@ const BigMovie: NextPage<BigMovieProps> = ({
                                         {data.movie?.overview}
                                     </div>
                                 </div>
-                                <div className="space-y-2">
+                                <div
+                                    className={cls(
+                                        "space-y-2 mb-5",
+                                        isMobile ? "mx-5 mt-5 text-sm" : ""
+                                    )}
+                                >
                                     <div className="w-full space-x-1">
                                         <span className="text-gray-50 text-opacity-70">
                                             배우:
@@ -195,4 +238,4 @@ const BigMovie: NextPage<BigMovieProps> = ({
     );
 };
 
-export default BigMovie;
+export default React.memo(BigMovie);

@@ -4,12 +4,12 @@ import client from "@libs/server/client";
 import Banner from "@components/banner";
 import Slider from "@components/slider";
 import Head from "next/head";
-import { Movie } from "@prisma/client";
 import { useRouter } from "next/router";
 import Loading from "@components/loading";
+import { MovieOnGenre } from "@types.ts";
 
 interface HomeProps {
-    movies: Movie[];
+    movies: MovieOnGenre[];
 }
 
 const Home: NextPage<HomeProps> = ({ movies }) => {
@@ -22,7 +22,7 @@ const Home: NextPage<HomeProps> = ({ movies }) => {
         );
     }
     return (
-        <div className="w-screen overflow-x-hidden min-w-[1000px] bg-black">
+        <div className="w-screen overflow-x-hidden bg-black">
             <Head>
                 <title>Examflix</title>
                 <link
@@ -57,11 +57,15 @@ const Home: NextPage<HomeProps> = ({ movies }) => {
 };
 
 export async function getStaticProps({}: NextPageContext) {
-    const movies = await client.movie.findMany();
+    const movies = await client.movie.findMany({
+        include: {
+            genres: true,
+        },
+    });
 
     return {
         props: {
-            movies,
+            movies: JSON.parse(JSON.stringify(movies)),
         },
 
         revalidate: 60 * 60 * 24,

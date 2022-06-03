@@ -2,7 +2,7 @@ import { cls } from "@libs/client/utils";
 import { motion, useAnimation, useViewportScroll } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
 interface IForm {
@@ -11,20 +11,43 @@ interface IForm {
 
 function Header() {
     const router = useRouter();
+    const navRef = useRef<HTMLElement>(null);
     const [inputOpen, setInputOpen] = useState(false);
+    const [width, setWidth] = useState(0);
     const [searchOpen, setSearchOpen] = useState(false);
     const { register, handleSubmit } = useForm<IForm>();
     const onValid = (data: IForm) => {
         router.push(`/search?q=${data.keyword}`);
     };
 
+    useEffect(() => {
+        const pageResize = () => {
+            if (navRef?.current) {
+                const newWidth = navRef.current.clientWidth;
+                setWidth(newWidth);
+            }
+        };
+        pageResize();
+        window.addEventListener("resize", pageResize);
+        return () => {
+            window.removeEventListener("resize", pageResize);
+        };
+    }, []);
+
+    const isMobile = width < 768;
+
     return (
         <motion.nav
-            onHoverStart={() => setSearchOpen(true)}
-            onHoverEnd={() => {
-                setSearchOpen(false);
-                setInputOpen(false);
-            }}
+            ref={navRef}
+            onHoverStart={isMobile ? undefined : () => setSearchOpen(true)}
+            onHoverEnd={
+                isMobile
+                    ? undefined
+                    : () => {
+                          setSearchOpen(false);
+                          setInputOpen(false);
+                      }
+            }
             className="flex justify-between fixed w-full top-0 text-[14px] px-5 py-4 text-white z-50 bg-black"
         >
             <div className="flex items-center">
@@ -61,7 +84,21 @@ function Header() {
                     className="text-white flex items-center relative"
                 >
                     <motion.svg
-                        animate={{ x: searchOpen ? -215 : 0 }}
+                        animate={{
+                            x: searchOpen
+                                ? isMobile
+                                    ? -width * 0.2
+                                    : -215
+                                : 0,
+                        }}
+                        onClick={
+                            isMobile
+                                ? () => {
+                                      if (searchOpen) setInputOpen(false);
+                                      setSearchOpen((prev) => !prev);
+                                  }
+                                : undefined
+                        }
                         onAnimationComplete={() => {
                             if (searchOpen) {
                                 setInputOpen(true);
@@ -84,6 +121,9 @@ function Header() {
                             required: true,
                         })}
                         style={{
+                            width: isMobile
+                                ? width * 0.25 - (width / 768) * 0.1
+                                : "",
                             transformOrigin: "right center",
                         }}
                         animate={inputOpen ? { opacity: 1 } : { opacity: 0 }}

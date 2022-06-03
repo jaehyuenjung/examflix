@@ -5,8 +5,12 @@ export interface ResponseType {
     [key: string]: any;
 }
 
+export interface MovieOnGenre extends Movie {
+    genres: Genre[];
+}
+
 export interface MovieResponse extends ResponseType {
-    movies: Movie[];
+    movies: MovieOnGenre[];
 }
 
 export interface IMovieDetail extends Movie {
