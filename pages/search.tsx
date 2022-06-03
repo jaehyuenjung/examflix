@@ -24,7 +24,7 @@ const Search: NextPage = () => {
         }
     }, [router]);
     return (
-        <div className="w-screen overflow-x-hidden min-w-[1000px] bg-black">
+        <div className="w-screen overflow-x-hidden bg-black">
             <Head>
                 <title>{`${router.query.q} - Examflix Search`}</title>
                 <link
