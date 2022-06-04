@@ -19,10 +19,13 @@ const Search: NextPage = () => {
     );
 
     useEffect(() => {
-        if (!router.query.q) {
-            router.push("/");
+        if (data && router) {
+            if (!router.query.q) {
+                router.push("/");
+            }
         }
-    }, [router]);
+    }, [data, router]);
+
     return (
         <div className="w-screen overflow-x-hidden bg-black">
             <Head>
@@ -46,7 +49,7 @@ const Search: NextPage = () => {
                     <Slider title="검색 결과" movies={data.movies} />
                 </>
             ) : (
-                <div className="w-full h-full">
+                <div className="w-screen h-screen">
                     <Loading />
                 </div>
             )}
